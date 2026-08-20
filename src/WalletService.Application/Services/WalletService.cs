@@ -94,6 +94,18 @@ namespace WalletService.Application.Services
                 wallet.SetAccountNumber(request.AccountNumber);
             }
 
+            if (!string.IsNullOrEmpty(request.Status))
+            {
+                if (!Enum.TryParse<WalletStatus>(request.Status, true, out var newStatus))
+                    throw new DomainException($"Недопустимый статус '{request.Status}'.");
+
+                wallet.ChangeStatus(newStatus);
+            }
+
+            await _context.SaveChangesAsync(ct);
+            return new WalletDto(wallet.Id, wallet.ClientId, wallet.Code,
+                wallet.AccountNumber, wallet.Status.ToString(), wallet.CreatedAt);
+
 
         }
     }
