@@ -44,6 +44,16 @@ namespace WalletService.Domain.Entities
 
         public static Wallet Create(Guid clientId, string code, WalletStatus initialStatus, string? accountNumber = null)
         {
+            if (!Enum.IsDefined(typeof(WalletStatus), initialStatus))
+            {
+                throw new ArgumentException($"Недопустимое значение статуса кошелька: {initialStatus}");
+            }
+
+            if (initialStatus == WalletStatus.Clsd)
+            {
+                throw new InvalidOperationException("Нельзя создать кошелёк сразу в статусе Закрыт.");
+            }
+
             return new Wallet (clientId, code, initialStatus, accountNumber);
         }
 

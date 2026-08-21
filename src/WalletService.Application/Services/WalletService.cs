@@ -51,7 +51,8 @@ namespace WalletService.Application.Services
                 client.SetParticipantId(request.ParticipantId);
             }
 
-            if (!Enum.TryParse<WalletStatus>(request.Status, true, out var newStatus))
+            if (!Enum.TryParse<WalletStatus>(request.Status, true, out var newStatus)
+                || !Enum.IsDefined(typeof(WalletStatus), newStatus))
                 throw new DomainException($"Недопустимый статус '{request.Status}'.");
 
             var activeWallet = client.Wallets.FirstOrDefault(w => w.IsActive);
@@ -96,7 +97,8 @@ namespace WalletService.Application.Services
 
             if (!string.IsNullOrEmpty(request.Status))
             {
-                if (!Enum.TryParse<WalletStatus>(request.Status, true, out var newStatus))
+                if (!Enum.TryParse<WalletStatus>(request.Status, true, out var newStatus)
+                    || !Enum.IsDefined(typeof(WalletStatus), newStatus))
                     throw new DomainException($"Недопустимый статус '{request.Status}'.");
 
                 wallet.ChangeStatus(newStatus);
