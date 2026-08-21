@@ -25,7 +25,7 @@ namespace WalletService.Infrastructure.Persistence.Configurations
 
             builder.Property(w => w.Status).HasConversion<int>().IsRequired();
 
-            builder.HasIndex(w => new { w.ClientId, w.Status }).IsUnique().HasFilter("[Status] IN (1, 2, 3)");
+            builder.HasIndex(w => new { w.ClientId }).IsUnique().HasFilter("[Status] IN (1, 2, 3)");
 
             builder.HasOne(w => w.Client).WithMany(c => c.Wallets).HasForeignKey(w => w.ClientId).OnDelete(DeleteBehavior.Restrict);
 

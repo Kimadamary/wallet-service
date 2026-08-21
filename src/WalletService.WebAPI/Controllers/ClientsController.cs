@@ -25,7 +25,7 @@ namespace WalletService.WebAPI.Controllers
             return Ok(clients);
         }
         [HttpGet("{mid}/wallets")]
-        public async Task<IActionResult> GetClientEallets(string mid, CancellationToken ct)
+        public async Task<IActionResult> GetClientWallets(string mid, CancellationToken ct)
         {
             var wallets = await _walletService.GetClientWalletsAsync(mid, ct);
             return Ok(wallets);

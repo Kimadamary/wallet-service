@@ -44,24 +44,26 @@ app.UseStaticFiles();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 
-app.MapControllers(); 
+app.MapControllers();
 
 
-//// test :
+// Apply migrations and seed initial data.
 
-//using (var scope = app.Services.CreateScope())
-//{
-//    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-//    if (!context.Clients.Any())
-//    {
-//        context.Clients.AddRange(
-//            new WalletService.Domain.Entities.Client("MID-001", "Иванов Иван Иванович", "PART-101"),
-//            new WalletService.Domain.Entities.Client("MID-002", "Петров Петр Петрович"),
-//            new WalletService.Domain.Entities.Client("MID-003", "Сидорова Анна Сергеевна")
-//        );
-//        context.SaveChanges();
-//    }
-//}
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    context.Database.Migrate();
 
-////===========
+    if (!context.Clients.Any())
+    {
+        context.Clients.AddRange(
+            new WalletService.Domain.Entities.Client("MID-001", "Иванов Иван Иванович", "PART-101"),
+            new WalletService.Domain.Entities.Client("MID-002", "Петров Петр Петрович"),
+            new WalletService.Domain.Entities.Client("MID-003", "Сидорова Анна Сергеевна")
+
+        );
+        context.SaveChanges();
+    }
+}
+
 app.Run();
