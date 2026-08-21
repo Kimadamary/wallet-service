@@ -1,0 +1,181 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Учет кошельков ЦР</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background: #eee;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .success {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Управление кошельками Цифрового Рубля</h1>
+
+    <div id="alert" class="error"></div>
+
+    <div class="card">
+        <h2>Список клиентов</h2>
+        <table id="clientsTable">
+            <thead>
+                <tr><th>MID</th><th>ФИО</th><th>Participant ID</th><th>Действие</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="card" id="walletsSection" style="display:none;">
+        <h2>Кошельки клиента: <span id="selectedClientMid"></span></h2>
+        <table id="walletsTable">
+            <thead>
+                <tr><th>Код</th><th>Статус</th><th>Номер счета</th><th>Дата создания</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Синхронизация / Изменение данных (Платформа ЦР)</h2>
+        <form id="syncForm">
+            <input type="text" id="mid" placeholder="MID клиента" required>
+            <input type="text" id="participantId" placeholder="Participant ID (опционально)">
+            <input type="text" id="walletCode" placeholder="Код кошелька" required>
+            <select id="status">
+                <option value="Prcs">Prcs (Ожидает)</option>
+                <option value="Actv">Actv (Активен)</option>
+                <option value="Blck">Blck (Заблокирован)</option>
+                <option value="Clsd">Clsd (Закрыт)</option>
+            </select>
+            <input type="text" id="accountNumber" placeholder="Номер счета (опционально)">
+            <button type="submit">Отправить данные</button>
+        </form>
+    </div>
+
+    <script>
+        const API_URL = '/api';
+
+        function showAlert(msg, isError = true) {
+            const el = document.getElementById('alert');
+            el.className = isError ? 'error' : 'success';
+            el.innerText = msg;
+            setTimeout(() => el.innerText = '', 5000);
+        }
+
+        async function loadClients() {
+            try {
+                const res = await fetch(`${API_URL}/clients`);
+                const clients = await res.json();
+                const tbody = document.querySelector('#clientsTable tbody');
+                tbody.innerHTML = clients.map(c => `
+                    <tr>
+                        <td>${c.mid}</td>
+                        <td>${c.fullName}</td>
+                        <td>${c.participantId || '-'}</td>
+                        <td><button onclick="loadWallets('${c.mid}')">Кошельки</button></td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                showAlert('Ошибка загрузки клиентов: ' + err.message);
+            }
+        }
+
+        async function loadWallets(mid) {
+            try {
+                document.getElementById('selectedClientMid').innerText = mid;
+                const res = await fetch(`${API_URL}/clients/${mid}/wallets`);
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || 'Ошибка запроса');
+
+                const tbody = document.querySelector('#walletsTable tbody');
+                tbody.innerHTML = data.map(w => `
+                    <tr>
+                        <td>${w.code}</td>
+                        <td><b>${w.status}</b></td>
+                        <td>${w.accountNumber || '-'}</td>
+                        <td>${new Date(w.createdAt).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+                document.getElementById('walletsSection').style.display = 'block';
+            } catch (err) {
+                showAlert(err.message);
+            }
+        }
+
+        document.getElementById('syncForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                mid: document.getElementById('mid').value,
+                participantId: document.getElementById('participantId').value || null,
+                walletCode: document.getElementById('walletCode').value,
+                status: document.getElementById('status').value,
+                accountNumber: document.getElementById('accountNumber').value || null
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/wallets/sync`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || 'Ошибка сохранения');
+
+                showAlert('Данные успешно синхронизированы!', false);
+                loadClients();
+                if (document.getElementById('selectedClientMid').innerText === body.mid) {
+                    loadWallets(body.mid);
+                }
+            } catch (err) {
+                showAlert(err.message);
+            }
+        });
+
+        loadClients();
+    </script>
+</body>
+</html>
