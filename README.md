@@ -18,7 +18,7 @@
 ### Запуск
 
 ```bash
-git clone <URL_ВАШЕГО_РЕПОЗИТОРИЯ>
+git clone <URL_РЕПОЗИТОРИЯ>
 cd wallet-service
 dotnet run --project src/WalletService.WebAPI
 ```
